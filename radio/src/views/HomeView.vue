@@ -12,16 +12,17 @@
             <div class="d-flex flex-column justify-space-between">
               <div>
                 <v-card-title class="text-h5">{{ radio.name }}</v-card-title>
-                <v-card-subtitle>{{ radio.country }}</v-card-subtitle>
-                <!-- Aggiungi altre informazioni della stazione radio se necessario -->
+                <v-card-subtitle>{{ radio.Country }}</v-card-subtitle>
+                
               </div>
               <v-card-actions>
-                <v-btn :icon="radio.isPlaying ? 'mdi-stop' : 'mdi-play'" @click="togglePlay(index)"></v-btn>
-                <v-btn :icon="radio.isFavorite ? 'mdi-heart' : 'mdi-heart-outline'" @click="toggleFavorite(index)"></v-btn>
+                <v-btn :icon="radio.isPlaying ? 'mdi-stop' : 'mdi-play'" @click="togglePlayback(radio)"></v-btn>
+                <v-btn :icon="radio.isFavorite ? 'mdi-heart' : 'mdi-heart-outline'" @click="toggleFavorite(radio)"></v-btn>
               </v-card-actions>
             </div>
           </v-card>
-          <audio ref="audioPlayer" :src="radio.url"></audio>
+          <!-- Usa il tag audio di HTML5 -->
+          <audio ref="audioPlayer"></audio>
         </v-col>
       </v-row>
     </v-container>
@@ -33,72 +34,123 @@
 </template>
 
 <script>
+import Hls from 'hls.js';
+
+
 export default {
   name: 'HomeView',
   data() {
     return {
       radios: [],
-      defaultImage: 'https://www.veryicon.com/download/png/miscellaneous/color-icon-circle/music-279?s=256',
-      currentPlayingIndex: null,
-    }
+      audio: new Audio(), // Elemento audio per la riproduzione
+      currentPlayingRadio: null, // Memorizza l'ID della radio attualmente in riproduzione
+      hls: null // Instance di HLS.js
+      
+    };
   },
   methods: {
+  
     getRadios() {
-      fetch('https://nl1.api.radio-browser.info/json/stations/search?limit=100&countrycode=IT&hidebroken=true&order=clickcount&reverse=true')
-        .then(response => response.json())
-        .then(data => {
-          this.radios = data.map(radio => ({
-            ...radio,
-            isPlaying: false,
-            isFavorite: false,
-          }));
-        });
-    },
-    getRadioImage(radio) {
-      return radio.favicon ? radio.favicon : this.defaultImage;
-    },
-    togglePlay(index) {
-      if (this.currentPlayingIndex !== null && this.currentPlayingIndex !== index) {
-        this.stopRadio(this.currentPlayingIndex);
-      }
-      if (this.radios[index].isPlaying) {
-        this.stopRadio(index);
+      const storedRadios = localStorage.getItem('radios');
+      if (storedRadios) {
+        this.radios = JSON.parse(storedRadios);
       } else {
-        this.startRadio(index);
+        fetch('https://nl1.api.radio-browser.info/json/stations/search?limit=100&countrycode=IT&hidebroken=true&order=clickcount&reverse=true')
+          .then(response => response.json())
+          .then(data => {
+            
+            this.radios = data.map(radio => ({
+              name: radio.name,
+              artist: radio.artist,
+              imageUrl: radio.favicon,
+              Country: radio.country,
+              url: radio.url,
+              stationId: radio.stationuuid,
+              isPlaying: false,
+              isFavorite: false,
+              
+            }));
+            console.log(this.radios)
+          });
       }
+      
     },
-    startRadio(index) {
-      const audioPlayer = this.$refs.audioPlayer[index];
-      audioPlayer.play();
-      this.radios[index].isPlaying = true;
-      this.currentPlayingIndex = index;
+    playAudio(url, radio) {
+      if (this.currentPlayingRadio && this.currentPlayingRadio !== radio) {
+        this.currentPlayingRadio.isPlaying = false;
+        if (this.hls) {
+          this.hls.destroy();
+          this.hls = null;
+        }
+        this.audio.pause();
+      }
+
+      if (url.endsWith('.m3u8')) {
+        if (Hls.isSupported()) {
+          this.hls = new Hls();
+          this.hls.loadSource(url);
+          this.hls.attachMedia(this.audio);
+          this.hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            this.audio.play();
+          });
+        } else if (this.audio.canPlayType('application/vnd.apple.mpegurl')) {
+          this.audio.src = url;
+          this.audio.play();
+        }
+      } else {
+        this.audio.src = url;
+        this.audio.play();
+      }
+
+      this.currentPlayingRadio = radio;
     },
-    stopRadio(index) {
-      const audioPlayer = this.$refs.audioPlayer[index];
-      audioPlayer.pause();
-      audioPlayer.currentTime = 0;
-      this.radios[index].isPlaying = false;
-      this.currentPlayingIndex = null;
+    togglePlayback(radio) {
+      if (radio.isPlaying) {
+        this.audio.pause();
+        if (this.hls) {
+          this.hls.stopLoad();
+        }
+      } else {
+        this.playAudio(radio.url, radio);
+      }
+      radio.isPlaying = !radio.isPlaying;
     },
-    toggleFavorite(index) {
-      const radio = this.radios[index];
+    toggleFavorite(radio) {
       radio.isFavorite = !radio.isFavorite;
-      if (radio.isFavorite) {
-        const favoriteRadios = JSON.parse(localStorage.getItem('favoriteRadios')) || [];
-        favoriteRadios.push(radio);
-        localStorage.setItem('favoriteRadios', JSON.stringify(favoriteRadios));
-      } else {
-        let favoriteRadios = JSON.parse(localStorage.getItem('favoriteRadios')) || [];
-        favoriteRadios = favoriteRadios.filter(favRadio => favRadio.id !== radio.id);
-        localStorage.setItem('favoriteRadios', JSON.stringify(favoriteRadios));
-      }
+      this.saveToLocalStorage();
     },
+    saveToLocalStorage() {
+      
+      const radiosToSave = this.radios.map(radio => ({
+        ...radio,
+        isPlaying: false 
+      }));
+      localStorage.setItem('radios', JSON.stringify(radiosToSave));
+    },
+    
+    getRadioImage(radio) {
+      if (radio.isPlaying) {
+        return 'https://m.media-amazon.com/images/G/01/digital/music/player/web/EQ_accent.gif';
+      } else {
+        return radio.imageUrl ? radio.imageUrl : "https://ps.w.org/music-player-for-elementor/assets/icon-256x256.png?rev=2452014";
+      }
+    }
+
+    
+    
   },
+ 
   created() {
     this.getRadios();
-  },
-}
+  }
+};
 </script>
+
+
+
+
+
+
 
 
 
