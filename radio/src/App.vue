@@ -1,51 +1,26 @@
 <template>
-  <nav>
-  <v-layout class="overflow-visible" style="height: 56px;">
-    <v-bottom-navigation
-      v-model="value"
-      :bg-color="color"
-      mode="shift"
-    >
-     
-
-      <v-btn>
-        <v-icon>mdi-music-note</v-icon>
-
-        <span>Music</span>
-      </v-btn>
-       <v-btn>
-        <v-icon>mdi-television-play</v-icon>
-
-        <span>Video</span>
-      </v-btn>
-
-    </v-bottom-navigation>
-  </v-layout>
-
+   <nav>
+    <v-layout class="overflow-visible" style="height: 56px;">
+      <v-bottom-navigation v-model="value" color="primary" active>
+        <v-btn @click="navigateTo('/')">
+          <v-icon>mdi-radio</v-icon>
+          Radio
+        </v-btn>
+        
+        <v-btn @click="navigateTo('/about')">
+          <v-icon>mdi-heart</v-icon>
+          Favorites
+        </v-btn>
+        
+        <v-btn @click="navigateTo('/world')">
+          <v-icon>mdi-map-marker</v-icon>
+          World
+        </v-btn>
+      </v-bottom-navigation>
+    </v-layout>
+    <router-view/>
   </nav>
-  <router-view/>
 </template>
-
-<script>
-export default {
-    data: () => ({ value: 0 }),
-
-    computed: {
-      color () {
-        switch (this.value) {
-          case 0: return 'teal'
-          case 1: return 'brown'
-          case 2: return 'blue-grey'
-          case 3: return 'blue-grey'
-          default: return 'blue-grey'
-        }
-      },
-    },
-    name: 'HomeView',
-  }
-
-
-</script>
 
 <style>
 #app {
@@ -69,3 +44,18 @@ nav a.router-link-exact-active {
   color: #42b983;
 }
 </style>
+
+<script>
+export default {
+  data() {
+    return {
+      value: 0
+    };
+  },
+  methods: {
+    navigateTo(route) {
+      this.$router.push(route);
+    }
+  }
+};
+</script>
