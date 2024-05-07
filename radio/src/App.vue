@@ -1,6 +1,6 @@
 <template>
    <nav>
-    <v-layout class="overflow-visible" style="height: 56px;">
+    <v-layout class="overflow-visible" style="height: 56px;" >
       <v-bottom-navigation v-model="value" color="primary" active>
         <v-btn @click="navigateTo('/')">
           <v-icon>mdi-radio</v-icon>

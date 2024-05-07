@@ -1,11 +1,11 @@
 <template>
   <v-container>
-    <div class="text-h1">ONLINE RADIO</div>
+    <div class="text-h1">ONLINE RADIO</div><br> <br>
 
     <v-container v-if="radios.length > 0">
       <v-row>
         <v-col v-for="(radio, index) in radios" :key="index" cols="12" sm="6" md="4" lg="3">
-          <v-card class="mx-auto" max-width="350" color="#FFEADD" elevation="7">
+          <v-card class="mx-auto" max-width="350" elevation="7">
             <v-avatar class="ma-3" rounded="0" size="125">
               <v-img :src="getRadioImage(radio)" height="125" width="auto"></v-img>
             </v-avatar>
@@ -81,7 +81,17 @@ export default {
       this.currentPlayingIndex = null;
     },
     toggleFavorite(index) {
-      this.radios[index].isFavorite = !this.radios[index].isFavorite;
+      const radio = this.radios[index];
+      radio.isFavorite = !radio.isFavorite;
+      if (radio.isFavorite) {
+        const favoriteRadios = JSON.parse(localStorage.getItem('favoriteRadios')) || [];
+        favoriteRadios.push(radio);
+        localStorage.setItem('favoriteRadios', JSON.stringify(favoriteRadios));
+      } else {
+        let favoriteRadios = JSON.parse(localStorage.getItem('favoriteRadios')) || [];
+        favoriteRadios = favoriteRadios.filter(favRadio => favRadio.id !== radio.id);
+        localStorage.setItem('favoriteRadios', JSON.stringify(favoriteRadios));
+      }
     },
   },
   created() {
@@ -89,6 +99,8 @@ export default {
   },
 }
 </script>
+
+
 
 
 
