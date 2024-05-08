@@ -12,7 +12,7 @@
             <div class="d-flex flex-column justify-space-between">
               <div>
                 <v-card-title class="text-h5">{{ radio.name }}</v-card-title>
-                <v-card-subtitle>{{ radio.country }}</v-card-subtitle>
+                <v-card-subtitle>{{ radio.Country }}</v-card-subtitle>
                 <!-- Aggiungi altre informazioni della stazione radio se necessario -->
               </div>
               <v-card-actions>
