@@ -1,10 +1,13 @@
 <template>
+  <div class="text-h1">WORLD RADIO</div>
     <div id="world-map"></div>
   </template>
   
   <script>
   import * as Three from 'three'; // Importa Three.js o la libreria scelta
   import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'; // Importa i controlli della telecamera
+  
+
   
   export default {
     name: 'WorldView',
@@ -17,14 +20,33 @@
       this.getRadios(); // Carica i dati delle radio quando il componente viene montato
     },
     methods: {
-      async getRadios() {
-        try {
-          const response = await fetch('https://nl1.api.radio-browser.info/json/stations/search?limit=100&countrycode=IT&hidebroken=true&order=clickcount&reverse=true');
-          const data = await response.json();
-          this.radios = data;
-          this.initMap(); // Inizializza la mappa dopo aver ottenuto i dati delle radio
-        } catch (error) {
-          console.error('Errore nel recupero dei dati delle radio:', error);
+      getRadios() {
+      const storedRadios = localStorage.getItem('radios');
+  if (storedRadios) {
+    this.radios = JSON.parse(storedRadios);
+    this.initMap(); // Inizializza la mappa con i dati delle radio memorizzate
+  } else {
+    fetch('https://nl1.api.radio-browser.info/json/stations/search?limit=8000&hidebroken=true&order=clickcount&reverse=true&has_extended_info=true')
+      .then(response => response.json())
+      .then(data => {
+        // Filtra le radio con valori validi per geo_lat e geo_long
+        this.radios = data.filter(radio => radio.geo_lat !== null && radio.geo_long !== null)
+                          .map(radio => ({
+                            name: radio.name,
+                            imageUrl: radio.favicon,
+                            geo_lat: radio.geo_lat,
+                            geo_long: radio.geo_long,
+                            url: radio.url,
+                            stationId: radio.stationuuid,
+                            isPlaying: false,
+                            isFavorite: false,
+                          }));
+        console.log(this.radios);
+        this.initMap(); // Inizializza la mappa con i dati delle radio filtrate
+      })
+      .catch(error => {
+        console.error('Errore nel recupero dei dati delle radio:', error);
+      });
         }
       },
       initMap() {
@@ -45,16 +67,9 @@
         const earth = new Three.Mesh(geometry, material);
         scene.add(earth);
   
-        // Aggiungi pin per ogni radio
-        this.radios.forEach(radio => {
-          // Carica un modello 3D per il pin della radio e posizionalo in base alle coordinate
-          const loader = new Three.GLTFLoader();
-          loader.load('radio_pin.glb', gltf => {
-            const pin = gltf.scene;
-            pin.position.set(radio.geo_long, radio.geo_lat, 0);
-            scene.add(pin);
-          });
-        });
+        
+        
+        
   
         camera.position.z = 100;
   
