@@ -7,7 +7,7 @@
           Radio
         </v-btn>
         
-        <v-btn @click="navigateTo('/about')">
+        <v-btn @click="navigateTo('/favorites')">
           <v-icon>mdi-heart</v-icon>
           Favorites
         </v-btn>

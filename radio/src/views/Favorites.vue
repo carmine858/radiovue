@@ -37,7 +37,7 @@
 import Hls from 'hls.js';
 
 export default {
-  name: 'HomeView',
+  name: 'FavoritesView',
   data() {
     return {
       radios: [],
@@ -112,7 +112,11 @@ export default {
       localStorage.setItem('radios', JSON.stringify(radiosToSave));
     },
     getRadioImage(radio) {
-      return radio.favicon ? radio.favicon : "https://ps.w.org/music-player-for-elementor/assets/icon-256x256.png?rev=2452014";
+      if (radio.isPlaying) {
+        return 'https://m.media-amazon.com/images/G/01/digital/music/player/web/EQ_accent.gif';
+      } else {
+        return radio.imageUrl ? radio.imageUrl : "https://ps.w.org/music-player-for-elementor/assets/icon-256x256.png?rev=2452014";
+      }
     }
   },
   created() {
