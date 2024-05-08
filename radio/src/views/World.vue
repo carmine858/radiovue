@@ -1,108 +1,131 @@
 <template>
   <div class="text-h1">WORLD RADIO</div>
-  <div id="world-map"></div>
+  <div ref="container"></div>
 </template>
 
 <script>
-import * as Three from 'three'; // Importa Three.js o la libreria scelta
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'; // Importa i controlli della telecamera
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
 export default {
   name: 'WorldView',
   data() {
-    return {
-      radios: [] // Array per memorizzare i dati delle radio
-    };
+      return {
+          camera: null,
+          renderer: null,
+          controls: null,
+          earthRadius: 1 
+      };
   },
   mounted() {
-    this.getRadios(); // Carica i dati delle radio quando il componente viene montato
+      this.init();
+      this.animate();
+
+    
+
+    // Fetch radio station data
+    fetch('https://nl1.api.radio-browser.info/json/stations/search?limit=8000&hidebroken=true&order=clickcount&reverse=true&has_extended_info=true')
+        .then(response => response.json())
+        .then(data => {
+            const italianRadioStations = data.filter(radio =>radio.geo_long !== null && radio.geo_lat !== null); // Aggiunto il controllo per i valori non null
+            italianRadioStations.forEach(station => {
+                const longitude = station.geo_long;
+                const latitude = station.geo_lat;
+                this.addMarker(longitude, latitude, 0.01); // Adjust marker size as needed
+            });
+            console.log(this.station);
+        })
+        .catch(error => {
+            console.error('Error fetching radio station data:', error);
+        });
+
+    // Listen for window resize event
+    window.addEventListener('resize', this.handleWindowResize);
   },
   methods: {
-    getRadios() {
-      const storedRadios = localStorage.getItem('radios');
-      if (storedRadios) {
-        this.radios = JSON.parse(storedRadios);
-        this.initMap(); // Inizializza la mappa con i dati delle radio memorizzate
-      } else {
-        fetch('https://nl1.api.radio-browser.info/json/stations/search?limit=8000&hidebroken=true&order=clickcount&reverse=true&has_extended_info=true')
-          .then(response => response.json())
-          .then(data => {
-            // Filtra le radio con valori validi per geo_lat e geo_long
-            this.radios = data.filter(radio => radio.geo_lat !== null && radio.geo_long !== null)
-              .map(radio => ({
-                name: radio.name,
-                imageUrl: radio.favicon,
-                geo_lat: radio.geo_lat,
-                geo_long: radio.geo_long,
-                url: radio.url,
-                stationId: radio.stationuuid,
-                isPlaying: false,
-                isFavorite: false,
-              }));
-            console.log(this.radios); // Usa il nome corretto dell'array
-            this.initMap();
-          })
-          .catch(error => {
-            console.error('Errore nel recupero dei dati delle radio:', error);
-          });
-      }
-    },
-    initMap() {
-      const container = document.getElementById('world-map');
-      const scene = new Three.Scene();
-      const camera = new Three.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      init() {
+          // Create a camera
+          this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+          this.camera.position.z = 5;
 
-      const renderer = new Three.WebGLRenderer();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      container.appendChild(renderer.domElement);
+          // Create a renderer
+          this.renderer = new THREE.WebGLRenderer();
+          this.renderer.setSize(window.innerWidth, window.innerHeight);
+          this.$refs.container.appendChild(this.renderer.domElement);
 
-      const controls = new OrbitControls(camera, renderer.domElement);
+          // Add OrbitControls
+          this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+          this.controls.enableDamping = true;
 
-      // Crea una sfera per la Terra
-      const geometry = new Three.SphereGeometry(50, 32, 32); // Dimensioni della sfera e dettaglio della griglia
-      const texture = new Three.TextureLoader().load('https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/9ca15be5-bdef-4bda-8172-2eac787b4d57/dfwltmg-a476b52d-c2f5-48d0-ac1d-6e17a4dbc8a6.png/v1/fill/w_1280,h_640,q_80,strp/earth_texture_map___my_version_by_adamirman2810_dfwltmg-fullview.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9NjQwIiwicGF0aCI6IlwvZlwvOWNhMTViZTUtYmRlZi00YmRhLTgxNzItMmVhYzc4N2I0ZDU3XC9kZndsdG1nLWE0NzZiNTJkLWMyZjUtNDhkMC1hYzFkLTZlMTdhNGRiYzhhNi5wbmciLCJ3aWR0aCI6Ijw9MTI4MCJ9XV0sImF1ZCI6WyJ1cm46c2VydmljZTppbWFnZS5vcGVyYXRpb25zIl19.27rjjsab6Qeolu03fgKUMyhDQZYT-zJ0eEE-G-vHFsE'); // Carica la texture della Terra
-      const material = new Three.MeshBasicMaterial({ map: texture }); // Applica la texture alla sfera
-      const earth = new Three.Mesh(geometry, material);
-      scene.add(earth);
+          // Create a scene
+          const scene = new THREE.Scene();
 
-      // Applica la texture a un materiale
-      const iconTexture = new Three.TextureLoader().load('radio/src/assets/map_pin.svg');
+          
+          const geometry = new THREE.SphereGeometry(this.earthRadius, 64, 64); // Increase segments for smoother surface
+          const texture = new THREE.TextureLoader().load('https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/9ca15be5-bdef-4bda-8172-2eac787b4d57/dfwltmg-a476b52d-c2f5-48d0-ac1d-6e17a4dbc8a6.png/v1/fill/w_1280,h_640,q_80,strp/earth_texture_map___my_version_by_adamirman2810_dfwltmg-fullview.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9NjQwIiwicGF0aCI6IlwvZlwvOWNhMTViZTUtYmRlZi00YmRhLTgxNzItMmVhYzc4N2I0ZDU3XC9kZndsdG1nLWE0NzZiNTJkLWMyZjUtNDhkMC1hYzFkLTZlMTdhNGRiYzhhNi5wbmciLCJ3aWR0aCI6Ijw9MTI4MCJ9XV0sImF1ZCI6WyJ1cm46c2VydmljZTppbWFnZS5vcGVyYXRpb25zIl19.27rjjsab6Qeolu03fgKUMyhDQZYT-zJ0eEE-G-vHFsE');
+          const material = new THREE.MeshPhongMaterial({ map: texture });
+          const earth = new THREE.Mesh(geometry, material);
+          scene.add(earth);
 
-      // Crea una geometria per l'icona, ad esempio un piano
-      const iconGeometry = new Three.PlaneGeometry(10, 10); // Imposta le dimensioni dell'icona come preferisci
+          // Add ambient light
+          const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+          scene.add(ambientLight);
 
-      // Crea un materiale per l'icona
-      const iconMaterial = new Three.MeshBasicMaterial({ map: iconTexture });
+          // Add directional light
+          const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+          directionalLight.position.set(1, 1, 1).normalize();
+          scene.add(directionalLight);
 
-      // Per ogni radio, crea e posiziona un map pin
-      this.radios.forEach(radio => {
-        // Crea una mesh utilizzando la geometria e il materiale dell'icona
-        const iconMesh = new Three.Mesh(iconGeometry, iconMaterial);
+          // Set the scene to component data
+          this.scene = scene;
+      },
+      addMarker(longitude, latitude, markerSize = 0.05) {
+          // Only proceed if longitude and latitude are not null
+       if (longitude !== null && latitude !== null) {
+        // Create a marker
+        const geometry = new THREE.SphereGeometry(markerSize, 32, 32);
+        const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        const marker = new THREE.Mesh(geometry, material);
 
-        // Imposta la posizione dell'icona utilizzando le coordinate geo_lat e geo_long della radio
-        iconMesh.position.set(radio.geo_long, radio.geo_lat, 0); // Assicurati che 0 sia l'altezza corretta
+        // Convert latitude and longitude to radians
+        const latRad = latitude * Math.PI / 180;
+        const lonRad = (longitude + 180) * Math.PI / 180; // Normalizing longitude to [0, 360] range
 
-        // Aggiungi l'icona alla scena
-        scene.add(iconMesh);
-      });
+        // Calculate the marker position on the sphere
+        const x = this.earthRadius * Math.cos(latRad) * Math.cos(lonRad);
+        const y = this.earthRadius * Math.cos(latRad) * Math.sin(lonRad);
+        const z = this.earthRadius * Math.sin(latRad);
 
-      camera.position.z = 100;
+        marker.position.set(x, y, z);
 
-      const animate = () => {
-        requestAnimationFrame(animate);
-        controls.update();
-        renderer.render(scene, camera);
-      };
+        // Adjust marker rotation
+        marker.lookAt(0, 0, 0);
 
-      animate();
+        // Add the marker to the scene
+        this.scene.add(marker);
+    } else {
+        console.error('Longitude or latitude is null');
     }
+      },
+      animate() {
+          requestAnimationFrame(this.animate);
+
+          // Update OrbitControls
+          if (this.controls) {
+              this.controls.update();
+          }
+
+          // Render the scene
+          if (this.renderer && this.scene && this.camera) {
+              this.renderer.render(this.scene, this.camera);
+          }
+      },
+      handleWindowResize() {
+          // Update camera aspect ratio and renderer size on window resize
+          this.camera.aspect = window.innerWidth / window.innerHeight;
+          this.camera.updateProjectionMatrix();
+          this.renderer.setSize(window.innerWidth, window.innerHeight);
+      }
   }
 };
 </script>
-
-<style>
-#world-map {
-  width: 100%;
-  height: 100vh;
-}
-</style>

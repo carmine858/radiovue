@@ -5,7 +5,7 @@
     <v-container v-if="favoriteRadios.length > 0">
       <v-row>
         <v-col v-for="(radio, index) in favoriteRadios" :key="index" cols="12" sm="6" md="4" lg="3">
-          <v-card class="mx-auto" max-width="350" elevation="7">
+          <v-card class="mx-auto" max-width="350" elevation="7" color="#8ecccc">
             <v-avatar class="ma-3" rounded="0" size="125">
               <v-img :src="getRadioImage(radio)" height="125" width="auto"></v-img>
             </v-avatar>
