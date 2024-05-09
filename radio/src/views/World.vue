@@ -149,7 +149,7 @@ export default {
                 };
                 this.scene.add(marker);
 
-                const invisibleSphereGeometry = new THREE.SphereGeometry(0.4, 32, 32);
+                const invisibleSphereGeometry = new THREE.SphereGeometry(0.03, 32, 32);
                 const invisibleSphereMaterial = new THREE.MeshBasicMaterial({ visible: false });
                 const invisibleSphere = new THREE.Mesh(invisibleSphereGeometry, invisibleSphereMaterial);
                 invisibleSphere.position.set(x, y, z);
@@ -177,7 +177,7 @@ export default {
             this.renderer.setSize(window.innerWidth, window.innerHeight);
         },
         async fetchRadios() {
-            const response = await fetch('https://de1.api.radio-browser.info/json/stations/search?limit=400&hidebroken=true&has_geo_info=true&order=clickcount&reverse=true');
+            const response = await fetch('https://de1.api.radio-browser.info/json/stations/search?limit=200&hidebroken=true&has_geo_info=true&order=clickcount&reverse=true');// https://nl1.api.radio-browser.info/json/stations/search?limit=100&has_geo_info=true&countrycode=IT&hidebroken=true&order=clickcount&reverse=true
             const data = await response.json();
             return data;
         },
