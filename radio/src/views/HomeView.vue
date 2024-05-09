@@ -61,7 +61,7 @@ export default {
             
             this.radios = data.map(radio => ({
               name: radio.name,
-              artist: radio.artist,
+              
               imageUrl: radio.favicon,
               Country: radio.country,
               url: radio.url,
