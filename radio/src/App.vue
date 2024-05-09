@@ -24,7 +24,7 @@
 
 <style>
 .navbar-background {
- background-color:  #50717b;
+ background-color:  #a4c3cd;
 }
 
 #app {
