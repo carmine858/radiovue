@@ -113,9 +113,10 @@ export default {
     },
     getRadioImage(radio) {
       if (radio.isPlaying) {
-        return 'https://m.media-amazon.com/images/G/01/digital/music/player/web/EQ_accent.gif';
+        return 'https://whiz-kid.de/images/sound.gif';
+   
       } else {
-        return radio.imageUrl ? radio.imageUrl : "https://ps.w.org/music-player-for-elementor/assets/icon-256x256.png?rev=2452014";
+        return radio.imageUrl ? radio.imageUrl : "https://cdn-icons-png.freepik.com/256/508/508206.png?semt=ais_hybrid";
       }
     }
   },

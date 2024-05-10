@@ -1,20 +1,29 @@
 <template>
   <v-container>
     <div class="text-h1 titolo">ONLINE RADIO</div><br>
-    <v-autocomplete label="Cerca Radio" v-model="searchQuery" @input="updateSearchQuery" variant="underlined">
+    <v-combobox
+      v-model="selectedRadio"
+      :items="radioNames()"
+      label="Cerca Radio"
+      @input="filterRadios"
+      @keydown.enter="handleEnter()"
+      variant="underlined"
+    >
       <template #item="{ item }">
-        {{ item }}
+        <v-list-item @click="selectRadio(item)">
+          <v-list-item-content>{{ item.title }}</v-list-item-content>
+        </v-list-item>
       </template>
       <template #selection="{ item }">
-        {{ item }}
+        <v-list-item @click="selectRadio(item)">
+          <v-list-item-content>{{ item.title }}</v-list-item-content>
+        </v-list-item>
       </template>
-      <v-list-item v-for="radio in radioNames" :key="radio" :value="radio">{{ radio }}</v-list-item>
-    </v-autocomplete>
+    </v-combobox>
 
-    <v-container v-if="filteredRadios.length > 0 || searchQuery">
+    <v-container v-if="Object.keys(filteredRadios).length > 0">
       <v-row>
-        <v-col v-for="(radio, index) in filteredRadios.length > 0 ? filteredRadios : radios" :key="index" cols="12"
-          sm="6" md="4" lg="3">
+        <v-col v-for="(radio, index) in filteredRadios" :key="index" cols="12" sm="6" md="4" lg="3">
           <v-card class="mx-auto" max-width="350" elevation="9" color="#ffffff">
             <v-avatar class="ma-3" rounded="0" size="125">
               <v-img :src="getRadioImage(radio)" height="125" width="auto"></v-img>
@@ -26,8 +35,7 @@
               </div>
               <v-card-actions>
                 <v-btn :icon="radio.isPlaying ? 'mdi-stop' : 'mdi-play'" @click="togglePlayback(radio)"></v-btn>
-                <v-btn :icon="radio.isFavorite ? 'mdi-heart' : 'mdi-heart-outline'"
-                  @click="toggleFavorite(radio)"></v-btn>
+                <v-btn :icon="radio.isFavorite ? 'mdi-heart' : 'mdi-heart-outline'" @click="toggleFavorite(radio)"></v-btn>
               </v-card-actions>
             </div>
           </v-card>
@@ -50,8 +58,7 @@
               </div>
               <v-card-actions>
                 <v-btn :icon="radio.isPlaying ? 'mdi-stop' : 'mdi-play'" @click="togglePlayback(radio)"></v-btn>
-                <v-btn :icon="radio.isFavorite ? 'mdi-heart' : 'mdi-heart-outline'"
-                  @click="toggleFavorite(radio)"></v-btn>
+                <v-btn :icon="radio.isFavorite ? 'mdi-heart' : 'mdi-heart-outline'" @click="toggleFavorite(radio)"></v-btn>
               </v-card-actions>
             </div>
           </v-card>
@@ -70,17 +77,41 @@ export default {
   data() {
     return {
       radios: [],
-      filteredRadios: [], // Aggiunta di una variabile per le radio filtrate
-      searchQuery: '', // Variabile di stato per la query di ricerca
-      audio: new Audio(), // Elemento audio per la riproduzione
-      currentPlayingRadio: null, // Memorizza l'ID della radio attualmente in riproduzione
-      hls: null // Instance di HLS.js
+      filteredRadios: {},
+      selectedRadio: null,
+
+      audio: new Audio(),
+      currentPlayingRadio: null,
+      hls: null
     };
   },
   methods: {
+    handleEnter() {
+      for (const key in this.filteredRadios) {
+    if (this.filteredRadios[key].name.toLowerCase() === this.selectedRadio.toLowerCase()) {
+      this.selectRadio(this.filteredRadios[key]);
+      return; // Termina il ciclo dopo aver trovato la radio corrispondente
+    }
+  }
+    },
+    selectRadio(radio) {
+      if (!this.filteredRadios[radio.name]) {
+        this.filteredRadios = { ...this.filteredRadios, [radio.name]: radio };
+      }
+    },
+    filterRadios() {
+      if (this.selectedRadio) {
+        this.filteredRadios = this.radios.filter(radio => radio.name.toLowerCase().includes(this.selectedRadio.toLowerCase()));
+      } else {
+        this.filteredRadios = {};
+      }
+    },
     radioNames() {
-    return this.radios.map(radio => radio.name);
-  },
+      return this.radios.map(radio => ({
+        title: radio.name,
+        value: radio.name
+      }));
+    },
     getRadios() {
       const storedRadios = localStorage.getItem('radios');
       if (storedRadios != this.radios.Country === "Italy") {
@@ -104,7 +135,6 @@ export default {
             }));
             localStorage.removeItem('radios');
 
-            // Salva i nuovi dati nel localStorage
             this.saveToLocalStorage();
           });
       }
@@ -162,21 +192,12 @@ export default {
     },
     getRadioImage(radio) {
       if (radio.isPlaying) {
-        return 'https://m.media-amazon.com/images/G/01/digital/music/player/web/EQ_accent.gif';
+        return 'https://whiz-kid.de/images/sound.gif';
       } else {
-        return radio.imageUrl ? radio.imageUrl : "https://ps.w.org/music-player-for-elementor/assets/icon-256x256.png?rev=2452014";
+        return radio.imageUrl ? radio.imageUrl : "https://cdn-icons-png.freepik.com/256/508/508206.png?semt=ais_hybrid";
       }
     },
-    updateSearchQuery() {
-      // Aggiornamento delle radio filtrate in base alla query di ricerca
-      const query = this.searchQuery ? this.searchQuery.toLowerCase() : '';
 
-      // Aggiornamento delle radio filtrate in base alla query di ricerca
-      this.filteredRadios = this.radios.filter(radio =>
-        radio.name && radio.name.toLowerCase().includes(query)
-
-      );
-    }
   },
   created() {
     this.getRadios();
@@ -195,3 +216,4 @@ export default {
   color: white;
 }
 </style>
+

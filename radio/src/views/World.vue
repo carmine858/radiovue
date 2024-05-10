@@ -1,16 +1,10 @@
 <template>
     <div class="text-h2">WORLD RADIO</div><br>
     <div class="navbar" v-if="selectedRadio">
-        <img :src="selectedRadio.favicon || defaultImage" class="radio-logo" alt="Radio logo">
+        <img :src="getRadioImage(selectedRadio)" class="radio-logo" alt="Radio logo">
         <h4>{{ selectedRadio.name }}</h4>
         <h3>{{ selectedRadio.country }}</h3>
         <v-btn :icon="selectedRadio.playing ? 'mdi-stop' : 'mdi-play'" @click="togglePlayPause(selectedRadio)"></v-btn>
-        <div v-if="selectedRadio.playing" class="sound-wave">
-            <div class="bar"></div>
-            <div class="bar"></div>
-            <div class="bar"></div>
-            <div class="bar"></div>
-        </div>
         
     </div>
     <div ref="container"></div>
@@ -85,11 +79,14 @@ export default {
             scene.add(directionalLight);
 
             this.scene = scene;
+
+            this.raycaster = new THREE.Raycaster();
+            this.raycaster.params.Points.threshold = 0.05;
         },
         onDocumentMouseClick(event) {
             event.preventDefault();
-            this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            this.mouse.x = (event.offsetX / this.renderer.domElement.clientWidth) * 2 - 1;
+            this.mouse.y = -(event.offsetY / this.renderer.domElement.clientHeight) * 2 + 1;
             this.raycaster.setFromCamera(this.mouse, this.camera);
             const intersects = this.raycaster.intersectObjects(this.scene.children);
 
@@ -149,7 +146,7 @@ export default {
                 };
                 this.scene.add(marker);
 
-                const invisibleSphereGeometry = new THREE.SphereGeometry(0.03, 32, 32);
+                const invisibleSphereGeometry = new THREE.SphereGeometry(0.015, 32, 32);
                 const invisibleSphereMaterial = new THREE.MeshBasicMaterial({ visible: false });
                 const invisibleSphere = new THREE.Mesh(invisibleSphereGeometry, invisibleSphereMaterial);
                 invisibleSphere.position.set(x, y, z);
@@ -177,7 +174,7 @@ export default {
             this.renderer.setSize(window.innerWidth, window.innerHeight);
         },
         async fetchRadios() {
-            const response = await fetch('https://de1.api.radio-browser.info/json/stations/search?limit=200&hidebroken=true&has_geo_info=true&order=clickcount&reverse=true');// https://nl1.api.radio-browser.info/json/stations/search?limit=100&has_geo_info=true&countrycode=IT&hidebroken=true&order=clickcount&reverse=true
+            const response = await fetch('https://de1.api.radio-browser.info/json/stations/search?limit=400&hidebroken=true&has_geo_info=true&order=clickcount&reverse=true');// https://nl1.api.radio-browser.info/json/stations/search?limit=100&has_geo_info=true&countrycode=IT&hidebroken=true&order=clickcount&reverse=true
             const data = await response.json();
             return data;
         },
@@ -231,6 +228,13 @@ export default {
                     }
                 });
         },
+        getRadioImage(radio) {
+      if (radio.playing) {
+        return 'https://whiz-kid.de/images/sound.gif';
+      } else {
+        return radio.favicon ? radio.favicon : "https://cdn-icons-png.freepik.com/256/508/508206.png?semt=ais_hybrid";
+      }
+    },
         pauseRadio(radio) {
             radio.audioPlayer.pause();
             radio.playing = false;
@@ -273,63 +277,4 @@ export default {
     border-radius: 25px;
 }
 
-.sound-wave {
-    display: flex;
-    align-items: center;
-    height: 20px;
-    margin-left: 10px;
-    margin-top: 2px;
-}
-
-.bar {
-    width: 4px;
-    height: 100%;
-    margin: 0 2px;
-    background-color: #333;
-    animation: pulse 0.8s infinite ease-in-out alternate;
-}
-
-.bar:nth-child(1) {
-    animation-delay: 0s;
-}
-
-.bar:nth-child(2) {
-    animation-delay: 0.1s;
-}
-
-.bar:nth-child(3) {
-    animation-delay: 0.2s;
-}
-
-.bar:nth-child(4) {
-    animation-delay: 0.3s;
-}
-
-@keyframes pulse {
-    0% {
-        transform: scaleY(1);
-    }
-
-    100% {
-        transform: scaleY(1.5);
-    }
-}
-
-.heart-container {
-    display: inline-block;
-    cursor: pointer;
-    margin-left: 5px;
-    margin-top: 2px;
-}
-
-.heart {
-    width: 20px;
-    height: 18px;
-    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="%23C1C1C1"/></svg>') center no-repeat;
-    background-size: 100%;
-}
-
-.heart.liked {
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3z" fill="%23FF0000"/></svg>');
-}
 </style>
