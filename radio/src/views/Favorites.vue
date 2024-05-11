@@ -1,6 +1,6 @@
 <template>
   <v-container>
-    <div class="text-h1">Preferiti</div><br> <br>
+    <div class=" titolo text-h1 ">Preferiti</div><br> <br>
 
     <v-container v-if="favoriteRadios.length > 0">
       <v-row>
@@ -48,13 +48,10 @@ export default {
     };
   },
   methods: {
-    randomColor() {
-      const colors = ['#952175', '#00796b', '#1976d2', '#c62828'];
-      const randomIndex = Math.floor(Math.random() * colors.length);
-      return colors[randomIndex];
-    },
+ 
     getRadios() {
-      const storedRadios = JSON.parse(localStorage.getItem('radios')) || [];
+      const storedRadios = JSON.parse(localStorage.getItem('radios')) || [] ;
+      
       this.radios = storedRadios;
       this.favoriteRadios = storedRadios.filter(radio => radio.isFavorite);
     },
@@ -116,7 +113,7 @@ export default {
         return 'https://whiz-kid.de/images/sound.gif';
    
       } else {
-        return radio.imageUrl ? radio.imageUrl : "https://cdn-icons-png.freepik.com/256/508/508206.png?semt=ais_hybrid";
+        return radio.imageUrl ? radio.imageUrl : "https://www.svgrepo.com/download/2225/music.svg";
       }
     }
   },
@@ -128,7 +125,13 @@ export default {
 
 
 <style>
-/* Stili CSS se necessario */
+
+.titolo {
+  font-family: fantasy;
+  font-style: italic;
+  color: white;
+  margin-top: -60px;
+}
 </style>
 
 

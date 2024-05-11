@@ -1,7 +1,7 @@
 <template>
   <v-container>
-    <div class="text-h1 titolo">ONLINE RADIO</div><br>
-    <v-text-field v-model="searchQuery" label="Cerca per nome" outlined></v-text-field>
+    <div class="text-h1 titolo">Online Radio</div><br>
+    <v-text-field v-model="searchQuery" label="Cerca Radio" prepend-icon="mdi-magnify" variant="underlined"></v-text-field>
 
     <v-container>
       <v-row>
@@ -46,7 +46,7 @@ export default {
     };
   },
   computed: {
-    // Filtraggio delle radio in base alla query di ricerca
+
     filterRadios() {
       return this.radios.filter(radio => {
         return radio.name.toLowerCase().includes(this.searchQuery.toLowerCase());
@@ -136,7 +136,7 @@ export default {
       if (radio.isPlaying) {
         return 'https://whiz-kid.de/images/sound.gif';
       } else {
-        return radio.imageUrl ? radio.imageUrl : "https://cdn-icons-png.freepik.com/256/508/508206.png?semt=ais_hybrid";
+        return radio.imageUrl ? radio.imageUrl : "https://www.svgrepo.com/download/2225/music.svg";
       }
     },
 
@@ -156,6 +156,7 @@ export default {
   font-family: fantasy;
   font-style: italic;
   color: white;
+  margin-top: -60px;
 }
 </style>
 

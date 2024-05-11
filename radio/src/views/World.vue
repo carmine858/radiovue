@@ -1,11 +1,11 @@
 <template>
-    <div class="text-h2">WORLD RADIO</div><br>
+    <div class="text-h1 titolo">World Radio</div><br>
     <div class="navbar" v-if="selectedRadio">
         <img :src="getRadioImage(selectedRadio)" class="radio-logo" alt="Radio logo">
         <h4>{{ selectedRadio.name }}</h4>
-        <h3>{{ selectedRadio.country }}</h3>
+        <h4>{{ selectedRadio.country }}</h4>
         <v-btn :icon="selectedRadio.playing ? 'mdi-stop' : 'mdi-play'" @click="togglePlayPause(selectedRadio)"></v-btn>
-        
+
     </div>
     <div ref="container"></div>
 </template>
@@ -56,12 +56,14 @@ export default {
 
             this.renderer = new THREE.WebGLRenderer();
             const width = window.innerWidth * 0.96; // Imposta la larghezza al 80% della finestra del browser
-            const height = window.innerHeight * 0.70; // Imposta l'altezza al 60% della finestra del browser
+            const height = window.innerHeight * 0.73; // Imposta l'altezza al 60% della finestra del browser
             this.renderer.setSize(width, height);
             this.$refs.container.appendChild(this.renderer.domElement);
 
             this.controls = new OrbitControls(this.camera, this.renderer.domElement);
             this.controls.enableDamping = true;
+            this.controls.minDistance = 1.4; // Imposta la distanza minima di zoom
+            this.controls.maxDistance = 3;
 
             const scene = new THREE.Scene();
 
@@ -186,7 +188,7 @@ export default {
                     radio.playing = false;
                     radio.audioPlayer = new Audio();
                 });
-                
+
             } catch (error) {
                 console.error('Error fetching radios:', error);
             }
@@ -229,12 +231,12 @@ export default {
                 });
         },
         getRadioImage(radio) {
-      if (radio.playing) {
-        return 'https://whiz-kid.de/images/sound.gif';
-      } else {
-        return radio.favicon ? radio.favicon : "https://cdn-icons-png.freepik.com/256/508/508206.png?semt=ais_hybrid";
-      }
-    },
+            if (radio.playing) {
+                return 'https://whiz-kid.de/images/sound.gif';
+            } else {
+                return radio.favicon ? radio.favicon : "https://www.svgrepo.com/download/2225/music.svg";
+            }
+        },
         pauseRadio(radio) {
             radio.audioPlayer.pause();
             radio.playing = false;
@@ -246,13 +248,13 @@ export default {
                 }
             });
         },
-    
-        },
-        created() {
-            this.getRadios();
-            
-        }
+
+    },
+    created() {
+        this.getRadios();
+
     }
+}
 
 </script>
 
@@ -277,4 +279,10 @@ export default {
     border-radius: 25px;
 }
 
+.titolo {
+    font-family: fantasy;
+    font-style: italic;
+    color: white;
+    margin-top: -22px;
+}
 </style>
